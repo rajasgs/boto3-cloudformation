@@ -61,7 +61,7 @@ def get_json(url, data_obj=None):
         json_response = response.read()
         return json.loads(json_response)
     except urllib2.HTTPError as e:
-        print e
+        print(e)
         return None
 
 def main():
@@ -95,6 +95,26 @@ def main():
         params = make_kv_from_args(args.params, "Parameter", False)
         tags = make_kv_from_args(args.tags)
 
+        logging.info("params: " + str(params))
+
+        # params hardcoded for testing
+        params = [
+            {
+                'ParameterValue': 'rj-tokyo-dev', 
+                'UsePreviousValue': False, 
+                'ParameterKey': 'KeyName'
+            },
+
+            {
+                'ParameterValue': 'rjcluster', 
+                'UsePreviousValue': False, 
+                'ParameterKey': 'EcsClusterName'
+            }
+        ]
+
+        #return
+
+        # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/cloudformation.html#CloudFormation.Client.create_stack
         response = client.create_stack(
             StackName=args.name,
             TemplateBody=json.dumps(template_object),
@@ -102,7 +122,8 @@ def main():
             DisableRollback=False,
             TimeoutInMinutes=2,
             NotificationARNs=[args.topicarn],
-            Tags=tags
+            Tags=tags,
+            ResourceTypes = ["AWS::EC2::Instance"],
         )
 
         # we expect a response, if its missing on non 200 then show response
