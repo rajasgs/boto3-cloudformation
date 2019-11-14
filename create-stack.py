@@ -48,7 +48,14 @@ def make_kv_from_args(params_as_querystring, name_prefix="", use_previous=None):
 
     return kv_pairs
 
-def get_json(url, data_obj=None):
+def get_template_json():
+
+    with open('template/EC2ContainerService-circleci-demo-cluster.json') as f:
+        data = json.load(f)
+
+    return data
+
+def get_json_from_url(url, data_obj=None):
     try:
         url_final = "{0}".format(url)
         if data_obj:
@@ -90,8 +97,12 @@ def main():
     client = make_cloudformation_client(args.config)
 
     try:
+        
         # setup the model
-        template_object = get_json(args.templateurl)
+        #template_object = get_json_from_url(args.templateurl)
+
+        template_object = get_template_json()
+        
         params = make_kv_from_args(args.params, "Parameter", False)
         tags = make_kv_from_args(args.tags)
 
@@ -109,6 +120,12 @@ def main():
                 'ParameterValue': 'rjcluster', 
                 'UsePreviousValue': False, 
                 'ParameterKey': 'EcsClusterName'
+            },
+
+            {
+                'ParameterValue': 'rjinstance', 
+                'UsePreviousValue': False, 
+                'ParameterKey': 'EcsInstanceType'
             }
         ]
 
@@ -123,7 +140,14 @@ def main():
             TimeoutInMinutes=2,
             NotificationARNs=[args.topicarn],
             Tags=tags,
-            ResourceTypes = ["AWS::EC2::Instance"],
+            ResourceTypes = [
+                "AWS::EC2::Instance",
+                "AWS::EC2::VPC",
+                "AWS::EC2::RouteTable"
+                "AWS::EC2::Route",
+                "AWS::EC2::Subnet",
+                "AWS::EC2::SubnetRouteTableAssociation"
+            ], # this is not working
         )
 
         # we expect a response, if its missing on non 200 then show response
